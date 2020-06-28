@@ -1,0 +1,2 @@
+# Repositář k disertační práci
+
