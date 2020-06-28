@@ -1,0 +1,37 @@
+<!-- {% extends "layout.html" %}
+
+{% block content %}
+ -->
+ <!DOCTYPE html>
+<html>
+<head></head>
+<body>
+
+    <h1>Flask</h1>
+
+
+
+        <h2>TEST</h2>
+        <p>
+			<table style="width:800px" border="1px">
+			<tr>
+				<th>ID</th>
+				<th>TimeStamp</th>
+				<th>Value</th>
+			</tr>
+			
+            {% for a in data %}
+			
+			<tr>
+				<td style="width:100px">{{a[0]}}</td>
+				<td style="width:200px">{{a[1]}}</td>
+				<td style="width:auto">{{a[3]}}</td>
+			</tr>
+            
+			{% endfor %}
+			</table>
+        </p>
+        
+</body>
+</html>
+<!-- {% endblock %} -->

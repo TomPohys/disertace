@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>{{ title }}.</h2>
+{% for k, v in message.items(): %}
+{{k}} : {{v}}<br />
+{% endfor %}
+
+
+
+<p>Use this area to provide additional information.</p>
+
+{% endblock %}

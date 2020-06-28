@@ -1,0 +1,201 @@
+https://stackoverflow.com/questions/54154897/create-primary-key-on-materialized-view-in-postgres
+
+-- Materialized View: public.sensor_data_xy
+
+-- DROP MATERIALIZED VIEW public.sensor_data_xy;
+
+CREATE MATERIALIZED VIEW public.sensor_data_xy AS 
+SELECT data.id,
+    data.id_sensor,
+    data.sensor,
+    data.value,
+    data."time",
+    sensor_loc.geom
+   FROM data,
+    sensor_loc
+  WHERE data.id_sensor = sensor_loc.id_sensor AND data.time > sensor_loc.time_from and data.time < sensor_loc.time_to
+WITH DATA;
+
+ALTER TABLE public.sensor_data_xy
+  OWNER TO sensor;
+
+-- Index: public.sensor_data_xy_id_idx
+
+-- DROP INDEX public.sensor_data_xy_id_idx;
+
+CREATE UNIQUE INDEX sensor_data_xy_id_idx
+  ON public.sensor_data_xy
+  USING btree
+  (id);
+
+
+
+#####################################################################################################
+#####################################################################################################
+update sensor_loc set geom = ST_GeomFromText('POINT(17.264893 49.593607)', 4326);
+
+
+#####################################################################################################
+#####################################################################################################
+https://stackoverflow.com/questions/28085468/postgresql-extract-last-row-for-each-id
+-- Materialized View: public.sensor_data_xy_last
+
+-- DROP MATERIALIZED VIEW public.sensor_data_xy_last;
+
+CREATE MATERIALIZED VIEW public.sensor_data_xy_last AS 
+SELECT 
+	data.id,
+	data.id_sensor, 
+	data.sensor, 
+	data.value, 
+	data.time, 
+	sensor_loc.geom
+FROM 
+	data, 
+	sensor_loc
+WHERE 
+	((data.id_sensor,data.time) in (select data.id_sensor,max(data.time) from data group by data.id_sensor)) 
+	AND
+	data.id_sensor = sensor_loc.id_sensor 
+	AND
+	data.time > sensor_loc.time_from and data.time < sensor_loc.time_to
+WITH DATA;
+
+ALTER TABLE public.sensor_data_xy_last
+  OWNER TO sensor;
+
+CREATE UNIQUE INDEX sensor_data_xy_last_id_idx
+  ON public.sensor_data_xy_last
+  USING btree
+  (id);
+  
+#####################################################################################################
+#####################################################################################################  
+select data.id_sensor, data.sensor, data.value, data.time, data.id, sensor_loc.geom
+from data, sensor_loc
+where ((data.id_sensor,data.time) in (select data.id_sensor,max(data.time) from data group by data.id_sensor)) and data.id_sensor = sensor_loc.id_sensor AND data.time > sensor_loc.time_from and data.time < sensor_loc.time_to
+
+
+#####################################################################################################
+#####################################################################################################
+-- Function: public.libelium_data()
+
+-- DROP FUNCTION public.libelium_data();
+
+CREATE OR REPLACE FUNCTION public.libelium_data()
+  RETURNS trigger AS
+$BODY$
+BEGIN
+IF to_number(NEW.value, '99999.99') > -999 OR to_number(NEW.value, '99999.99') < 999  THEN
+
+INSERT INTO data(id_sensor, sensor, value, time, original_id) VALUES (NEW.id_wasp, NEW.sensor, to_number(NEW.value, '999.99'), NEW.timestamp, NEW.id);
+END IF;    
+RETURN NEW;
+END
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION public.libelium_data()
+  OWNER TO sensor;
+  
+  
+CREATE TRIGGER libelium_data
+    AFTER INSERT ON sammwap.sammwap
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.libelium_data();
+
+
+#####################################################################################################
+#####################################################################################################   
+insert missing values from sammwap to data
+
+INSERT INTO data(id_sensor, sensor, value, time, original_id) SELECT id_wasp, sensor, to_number(value, '999.99'), timestamp, id from sammwap.sammwap where sammwap.id in (select sammwap.id from sammwap.sammwap where sammwap.id > 386267 and sammwap.value NOT LIKE '%-1001.00%' and sammwap.id NOT IN (SELECT original_id from data where original_id IS NOT NULL));
+
+insert missing values without >999
+
+INSERT INTO data(id_sensor, sensor, value, time, original_id) SELECT id_wasp, sensor, to_number(value, '999.99'), timestamp, id from sammwap.sammwap where sammwap.id in (select sammwap.id from sammwap.sammwap where sammwap.id > 661966 and sammwap.value NOT LIKE '%-1001.00%' and to_number(sammwap.value, '9999.99') < 999 and sammwap.id NOT IN (SELECT original_id from data where original_id IS NOT NULL));
+
+#####################################################################################################
+#####################################################################################################
+BATT
+select * from data where id_sensor = '1AD8F6' and sensor = 'BAT' order by time desc;
+
+#####################################################################################################
+#####################################################################################################
+time_bucket
+
+SELECT id_sensor,sensor, time_bucket('60 minutes', time) AS interval,
+  last(value, time)
+FROM data
+WHERE time > now () - interval '1 day'
+GROUP BY id_sensor,sensor, interval
+ORDER BY interval DESC;
+
+
+#####################################################################################################
+#####################################################################################################
+
+NOTIFY qgis, 'refresh qgis';
+
+#####################################################################################################
+#####################################################################################################
+
+-- Materialized View: public.sensor_data_xy_last_tca
+
+-- DROP MATERIALIZED VIEW public.sensor_data_xy_last_tca;
+
+CREATE VIEW public.sensor_data_xy_last_tca AS 
+ SELECT data.id,
+    data.id_sensor,
+    data.sensor,
+    data.value,
+    data."time",
+    sensor_loc.geom
+   FROM data,
+    sensor_loc
+  WHERE ((data.id_sensor, data."time") IN ( SELECT data_1.id_sensor,
+            max(data_1."time") AS max
+           FROM data data_1
+          GROUP BY data_1.id_sensor)) AND data.id_sensor = sensor_loc.id_sensor AND data."time" > sensor_loc.time_from AND data."time" < sensor_loc.time_to AND data.sensor = 'TCA'::text;
+
+ALTER TABLE public.sensor_data_xy_last_tca
+  OWNER TO sensor;
+
+-- Index: public.sensor_data_xy_last_tca_id_idx
+
+-- DROP INDEX public.sensor_data_xy_last_tca_id_idx;
+
+--CREATE UNIQUE INDEX sensor_data_xy_last_tca_id_idx
+--  ON public.sensor_data_xy_last_tca
+--  USING btree
+--  (id);
+
+#####################################################################################################
+#####################################################################################################
+hrube_chyby_sammwap
+samwap
+after
+insert 
+
+BEGIN
+ /*vymazání hrubých chyb v teplotních datech, Smart Agriculture*/
+  	DELETE FROM sammwap WHERE sensor = 'TCA' and value='-1001.00';
+  
+ /*vymazání hrubých chyb v teplotních datech, Smart Environment*/
+    DELETE FROM sammwap WHERE sensor = 'TCB' and value='-1001.00';
+END
+
+#####################################################################################################
+#####################################################################################################
+
+PG_CHAMELEON Disabled tables
+chameleon stop_all_replicas --config default --source mysql --debug
+chameleon sync_tables --config default --source mysql --tables meshlium.sammwap --debug
+
+create trigger and copy insert data from "sammwap" to "data"
+
+chameleon start_replica --config default --source mysql
+chameleon show_status --config default --source mysql
+
+
