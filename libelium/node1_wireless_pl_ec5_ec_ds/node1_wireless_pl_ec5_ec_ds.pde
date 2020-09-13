@@ -32,7 +32,6 @@ uint8_t  panID[2] = {0x12,0x34};
 #include <WaspFrame.h>
 #include <WaspSensorAgr_v20.h>
 
-
 void sleep_until(int to_time)
 { 
   char* minutes = "";
@@ -49,7 +48,6 @@ void setup(){
   
   xbee802.ON();
   USB.println(NODE_ID);
-  
   
   xbee802.setChannel(0x0C);
    /////////////////////////////////////
@@ -133,7 +131,6 @@ void loop(){
   USB.println();
   frame.createFrame(ASCII);
   
-  
   /////////////////////////////////////////////
   // 2.1. check pluviometer interruption
   /////////////////////////////////////////////
@@ -195,7 +192,6 @@ void loop(){
         //send
         xbee802.ON();
         
-        
         packet = (packetXBee*) calloc(1,sizeof(packetXBee));
         packet -> mode = UNICAST;
         //nastaveni cilovych parametru paketu
@@ -225,7 +221,6 @@ void loop(){
       }  
   
 }
-
 
 ///////////////////////////////////////////////////////////////////////////
 void measureSensors()
@@ -317,16 +312,13 @@ void measureSensors()
         index = 0;
         // calculate the average:
         AnalogAverage = AnalogValueTotal / numReadings;
-      
-    
-  
+
         tempSampleTime=millis();
         // pro zapnutí napájení pinu 17
         SensorAgrv20.setSensorMode(SENS_ON, SENS_AGR_LDR);
         delay(10);
         temperature = Utils.readTempDS1820(DIGITAL2, true);  // read the current temperature from the  DS18B20
         SensorAgrv20.setSensorMode(SENS_OFF, SENS_AGR_LDR);
-      
 
         averageVoltage=AnalogAverage*(float)4900/1558;
         
@@ -356,10 +348,6 @@ void measureSensors()
         }
       
     }
-    
-    
-
-
 
     // Read the pluviometer sensor
     /* WaspSensorAgr_v20cpp - line 1028 
@@ -404,7 +392,6 @@ void measureSensors()
     
     // dulezite pro prerusovac - i kdyz je uspany a nema zadnou spotrebu
     // potřebuje nastavit na zapnuto  
-    
 
     SensorAgrv20.ON();
 }

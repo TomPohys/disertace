@@ -23,7 +23,6 @@ float humidityVal;
 #include <WaspFrame.h>
 #include <WaspSensorGas_v20.h>
 
-
 void setup(){
   
   // init USB port
@@ -31,7 +30,6 @@ void setup(){
   
   xbee802.ON();
   USB.println(NODE_ID);
-  
   
   xbee802.setChannel(0x0C);
    /////////////////////////////////////
@@ -87,13 +85,10 @@ void setup(){
   packet = NULL;
   
   RTC.ON();
-  
 }
 
 ///////////////////////////////////////////////////////////////////////////
 void loop(){
- 
- 
   //Read the sensor 
   measureSensors();
   
@@ -108,8 +103,6 @@ void loop(){
   USB.print(humidityVal);
   USB.println(F("%RH"));
   delay(1000);
-
-
 }
 
 void measureSensors()
